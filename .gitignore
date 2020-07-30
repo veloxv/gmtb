@@ -1,0 +1,47 @@
+#ignore backup saves
+*~
+
+#ignore compiled python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# c extensions
+*.so
+
+# Distribution
+.Python
+env/
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+t
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ignore idea folders
+.idea/
+
+# virtual environment
+.venv/
+venv/
+ENV/
+
+#ignore large datasets
+#test/gmpd/results
