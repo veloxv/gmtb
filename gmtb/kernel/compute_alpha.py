@@ -20,7 +20,7 @@ def compute_alpha(weights, k_a_set, k_a_a, k_b_set, k_b_b, k_a_b):
     #    alpha = 0.5
 
     #TODO: how to convert to real alpha?
-    alpha = alpha.real
+    alpha = abs(alpha)
 
     alpha = max(alpha, 0)
     alpha = min(alpha, 1)

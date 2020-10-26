@@ -16,10 +16,10 @@ def median_weights_iter(n, kernel_matrix, start, normalize):
     max_iter = 1000
     iter = 0
 
-    #while np.abs(np.power(np.sum(weights_median_set - weights_median_set_new), 2)) > threshold and iter < max_iter:
-    while iter < max_iter:
+    while np.sum(np.power(np.abs(weights_median_set) - abs(weights_median_set_new), 2)) > threshold and iter < max_iter:
+    #while iter < max_iter:
         # if and ~isreal ...
-        print(iter)
+        #print(iter)
         #print(np.abs(np.power(np.sum(weights_median_set - weights_median_set_new), 2)))
         #print(weights_median_set_new[:3])
         #print(np.sum(weights_median_set_new))
@@ -38,7 +38,7 @@ def median_weights_iter(n, kernel_matrix, start, normalize):
         # compute weights
         # prevent negative values
         tmp_weights = np.diag(kernel_matrix) - 2 * k_median_set_new + k_median_median_new
-        print(tmp_weights[:3])
+        #print(tmp_weights[:3])
         #tmp_weights[tmp_weights < 1e-10] = 1e-10
 
         weights_median_set_new = 1 / np.sqrt(tmp_weights)
@@ -51,8 +51,8 @@ def median_weights_iter(n, kernel_matrix, start, normalize):
 
         iter = iter + 1
 
-        if iter > 20:
-            sys.exit()
+        #if iter > 20:
+        #    sys.exit()
 
     if np.any(np.isnan(weights_median_set_new)):
         nan_stop = True

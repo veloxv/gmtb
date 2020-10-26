@@ -45,7 +45,7 @@ def ewm(dataset, dist_func, weighted_mean_func, verbose=False):
 
     # ********************************* Parameters ********************************* #
     w = 3
-    max_iter = 20
+    max_iter = 5
     n_max = min(20,2*len(dataset))
 
     # ********************************* BEGIN ITERATION ********************************* #
@@ -72,8 +72,6 @@ def ewm(dataset, dist_func, weighted_mean_func, verbose=False):
             #search_crit = @(alpha) best_crit(original_set, weighted_mean_func(dataset{pairs(i,1)}, dataset{pairs(i,2)}, alpha));
             #options.TolX = last_best_crit * 0.001;
             #[alpha, ~] = fminbnd(search_crit,0,1,options);
-
-            # use this alpha to calculate a result
             #dataset{n+i} = weighted_mean_func(dataset{pairs(i,1)}, dataset{pairs(i,2)}, alpha);
             #crit_values(n+i) = best_crit(original_set,dataset{n+i});
 
