@@ -1,13 +1,13 @@
 import numpy as np
 from ..compute_alpha import compute_alpha
 from ..best_weighted_mean import best_weighted_mean
-
+from gmtb.util import pdist
 
 # implementation of the triangular recursive reconstruction method
 # returns:
 #   rec_obj - reconstructed object
 #   best_value - value of the reconstructed object (at the moment SOD)
-def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,kernel_matrix):
+def triangular_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix,verbose=False):
 
     # return if only one or two objects
     if len(object_set) == 1:
@@ -23,8 +23,10 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
 
     # first best value: set median
     ind = np.argsort(dist)
-    best_value = np.sum(np.sqrt(k_mean_mean[ind[0]] - 2 * k_mean_set[ind[0], :] + np.diag(kernel_matrix)))
     new_mean = object_set[ind[0]]
+    #best_value = np.sum(pdist(set1=orig_set,set2=[new_mean],func=dist_func))
+    best_value = np.sum(np.sqrt(k_mean_mean[ind[0]] - 2 * k_mean_set[ind[0], :] + np.diag(kernel_matrix)))
+
 
     # precompute k_median (kernel of the true median with itself)
     k_median_vec = np.sum(np.outer(weights,weights) * kernel_matrix) / np.sum(weights)**2
@@ -42,18 +44,20 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
         for i in range(0, len(object_set)-2, 3):
 
             # compute median between first two
-            alpha = compute_alpha(weights, k_mean_set[ind[i]], k_mean_mean[ind[i]], k_mean_set[ind[i+1]], k_mean_mean[ind[i+1]],
+            alpha, complex = compute_alpha(weights, k_mean_set[ind[i]], k_mean_mean[ind[i]], k_mean_set[ind[i+1]], k_mean_mean[ind[i+1]],
                                   kernel_func(object_set[ind[i]],object_set[ind[i+1]]))
             nm, kms, kmm, bv = \
                 best_weighted_mean(object_set[ind[i]], object_set[ind[i+1]], alpha, orig_set, kernel_matrix, kernel_func,
-                                   weighted_mean_func)
+                                   dist_func, weighted_mean_func, complex)
 
             # compute median between result and third
-            alpha = compute_alpha(weights, kms, kmm, k_mean_set[ind[i + 2]], k_mean_mean[ind[i + 2]],
+            alpha, complex = compute_alpha(weights, kms, kmm, k_mean_set[ind[i + 2]], k_mean_mean[ind[i + 2]],
                                   kernel_func(nm, object_set[ind[i + 2]]))
             nm, kms, kmm, bv = \
                 best_weighted_mean(nm, object_set[ind[i + 2]], alpha, orig_set, kernel_matrix, kernel_func,
-                                   weighted_mean_func)
+                                   dist_func,weighted_mean_func, complex)
+
+
 
             new_object_set.append(nm)
             new_k_mean_set.append(kms)
@@ -61,10 +65,10 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
             tmp_dist = (k_median_vec
                                     - 2 * np.sum(weights * kms) / np.sum(weights)
                                     + kmm)
-            if tmp_dist < 0:
-                tmp_dist = (dist[ind[i]] + dist[ind[i+1]] + dist[ind[i+2]])/3
-            else:
-                tmp_dist = np.sqrt(tmp_dist)
+            #if tmp_dist < 0:
+            #    tmp_dist = (dist[ind[i]] + dist[ind[i+1]] + dist[ind[i+2]])/3
+            #else:
+            #    tmp_dist = np.sqrt(tmp_dist)
             new_dist.append(tmp_dist)
 
             # save best
@@ -72,6 +76,8 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
                 best_value = bv
                 new_mean = nm
 
+            if (verbose):
+                print("SOD: %f" % np.sum(pdist(set1=orig_set,set2=[new_mean],func=dist_func)))
 
 
         # if only one leftover object: just copy
@@ -83,14 +89,14 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
 
         # else: linear
         elif np.remainder(len(object_set), 3) == 2:
-            alpha = compute_alpha(weights, k_mean_set[ind[-2]], k_mean_mean[ind[-2]], k_mean_set[ind[-1]],
+            alpha, complex = compute_alpha(weights, k_mean_set[ind[-2]], k_mean_mean[ind[-2]], k_mean_set[ind[-1]],
                                   k_mean_mean[ind[-1]],
                                   kernel_func(object_set[ind[-2]], object_set[ind[-1]]))
 
             nm, kms, kmm, bv = \
                 best_weighted_mean(object_set[ind[-2]], object_set[ind[-1]], alpha, orig_set, kernel_matrix,
-                                   kernel_func,
-                                   weighted_mean_func)
+                                   kernel_func, dist_func,
+                                   weighted_mean_func, complex)
 
             new_object_set.append(nm)
             new_k_mean_set.append(kms)
@@ -98,15 +104,18 @@ def triangular_recursive(object_set,weights,dist,kernel_func,weighted_mean_func,
             tmp_dist = (k_median_vec
                 - 2 * np.sum(weights * kms) / np.sum(weights)
                 + kmm)
-            if tmp_dist < 0:
-                tmp_dist = (dist[ind[-2]] + dist[ind[-1]]) / 2
-            else:
-                tmp_dist = np.sqrt(tmp_dist)
+            #if tmp_dist < 0:
+            #    tmp_dist = (dist[ind[-2]] + dist[ind[-1]]) / 2
+            #else:
+            #    tmp_dist = np.sqrt(tmp_dist)
             new_dist.append(tmp_dist)
 
             if bv < best_value:
                 best_value = bv
                 new_mean = nm
+
+            if (verbose):
+                print("SOD: %f" % best_value)
 
         # prepare next iteration
         object_set = new_object_set

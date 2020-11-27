@@ -7,7 +7,7 @@ import gmtb.util
 # returns
 #   rec_obj - the improved reconstructed object
 #   best_value - value of the reconstructed object (ath the moment SOD)
-def linear_search(median_obj,object_set,dist_func,weighted_mean_func,num_iterations=5):
+def linear_search(median_obj,object_set,dist_func,weighted_mean_func,num_iterations=5,verbose=False):
 
     best_value = np.sum(gmtb.util.pdist(set1=object_set,set2=[median_obj],func=dist_func))
     rec_obj = median_obj
@@ -27,12 +27,17 @@ def linear_search(median_obj,object_set,dist_func,weighted_mean_func,num_iterati
 
             alpha, new_best_value, ierr, numfunc = scipy.optimize.fminbound(search_crit, 0, 1, maxfun=15, full_output=True, disp=0)
 
+
             if new_best_value < best_value:
                 best_value = new_best_value
                 best_obj = weighted_mean_func(rec_obj, object_set[obj], alpha)
 
+
         # set new median
         rec_obj = best_obj
+
+        if (verbose):
+            print("SOD: %f" % best_value)
 
         if last_best_value == best_value:
             return rec_obj, best_value

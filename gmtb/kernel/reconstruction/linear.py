@@ -2,7 +2,7 @@ import gmtb.kernel
 import numpy as np
 
 
-def linear(object_set,weights,dist,kernel_func,weighted_mean_func,kernel_matrix,n_points):
+def linear(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix, n_points):
 
     # get order of objects by distance
     ind = np.argsort(dist)
@@ -22,11 +22,11 @@ def linear(object_set,weights,dist,kernel_func,weighted_mean_func,kernel_matrix,
         b = ind[i+1]
 
         # compute alpha
-        alpha = gmtb.kernel.compute_alpha(weights, k_mean_set, k_mean_mean, kernel_matrix[:, b], kernel_matrix[b, b], k_mean_set[b])
+        alpha, complex = gmtb.kernel.compute_alpha(weights, k_mean_set, k_mean_mean, kernel_matrix[:, b], kernel_matrix[b, b], k_mean_set[b])
 
         # compute new weighted mean
         new_mean[i+1], k_mean_set, k_mean_mean, best_value_kernel_space[i+1] = \
-            gmtb.kernel.best_weighted_mean(new_mean[i], object_set[b], alpha, object_set, kernel_matrix, kernel_func, weighted_mean_func)
+            gmtb.kernel.best_weighted_mean(new_mean[i], object_set[b], alpha, object_set, kernel_matrix, kernel_func, dist_func, weighted_mean_func,complex)
 
     ind = np.argmin(best_value_kernel_space)
     return new_mean[ind], best_value_kernel_space[ind]

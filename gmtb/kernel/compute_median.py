@@ -7,7 +7,7 @@ import gmtb.util
 
 # computes median using kernel functions.
 # paramter dist_func is only needed in case of linear search
-def compute_median(object_set, weights, kernel_func, weighted_mean_func, rec_type, kernel_matrix=None, dist_func=None):
+def compute_median(object_set, weights, kernel_func, weighted_mean_func, rec_type, kernel_matrix=None, dist_func=None,verbose=False):
     n = len(object_set)
 
     # compute kernels
@@ -20,7 +20,8 @@ def compute_median(object_set, weights, kernel_func, weighted_mean_func, rec_typ
             dist = np.sqrt(np.sum(kernel_matrix) / np.power(n, 2) - 2/n * np.sum(kernel_matrix, 0) + np.diag(kernel_matrix))
         elif weights == "median":
             weights = gmtb.kernel.compute_weights(kernel_matrix, True)[0]
-            dist = 1 / weights
+            # use squared distance for easier computation
+            dist = np.power(1 / weights,2)
         else:
             raise ValueError("compute_median: only median and mean allowed as string values for weights")
     else:
@@ -30,19 +31,23 @@ def compute_median(object_set, weights, kernel_func, weighted_mean_func, rec_typ
 
     # reconstruction
     if rec_type == "linear":
-        return gmtb.kernel.reconstruction.linear(object_set, weights, dist, kernel_func, weighted_mean_func, kernel_matrix, 2)
+        return gmtb.kernel.reconstruction.linear(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix, 2)
     elif rec_type == "triangular":
-        return gmtb.kernel.reconstruction.linear(object_set, weights, dist, kernel_func, weighted_mean_func, kernel_matrix, 3)
+        return gmtb.kernel.reconstruction.linear(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix, 3)
     elif rec_type == "linear_recursive":
-        return gmtb.kernel.reconstruction.linear_recursive(object_set, weights, dist, kernel_func, weighted_mean_func,
-                                               kernel_matrix)
+        return gmtb.kernel.reconstruction.linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func,
+                                               kernel_matrix, verbose=verbose)
     elif rec_type == "triangular_recursive":
-        return gmtb.kernel.reconstruction.triangular_recursive(object_set, weights, dist, kernel_func, weighted_mean_func,
-                                                   kernel_matrix)
+        return gmtb.kernel.reconstruction.triangular_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func,
+                                                   kernel_matrix, verbose=verbose)
     elif rec_type == "linear_search_linear_recursive":
-        obj, bv = gmtb.kernel.reconstruction.linear_recursive(object_set, weights, dist, kernel_func, weighted_mean_func,
-                                                  kernel_matrix)
-        return gmtb.util.linear_search(obj, object_set, dist_func, weighted_mean_func)
+        if(verbose):
+            print("Start linear_search_linear_recursive")
+        obj, bv = gmtb.kernel.reconstruction.linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func,
+                                                  kernel_matrix, verbose=verbose)
+        if(verbose):
+            print("Start linear_search")
+        return gmtb.util.linear_search(obj, object_set, dist_func, weighted_mean_func,verbose=verbose)
     else:
         raise NotImplementedError("kernel.compute_median: reconstruction method not found")
 
