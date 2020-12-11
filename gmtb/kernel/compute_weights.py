@@ -41,8 +41,8 @@ def median_weights_iter(n, kernel_matrix, start, normalize):
             weights_median_set_new[ind] = 1
             return weights_median_set_new, k_median_set, k_median_median, nan_stop, iter, max_iter, first_complex
 
-        # else: compute weights normally
-        weights_median_set_new = 1 / np.sqrt(tmp_weights)
+        # else: compute weights normally, but use absolute to ensure real positive weights
+        weights_median_set_new = (1 / np.sqrt(tmp_weights))
 
         if np.isnan(first_complex) and np.any(np.iscomplex(weights_median_set_new)):
             first_complex = iter
@@ -62,10 +62,9 @@ def compute_weights(kernel_matrix, normalize=False):
     n = np.shape(kernel_matrix)[0]
 
     start = np.ones(n, dtype=complex)
-    #start = np.sum(kernel_matrix) / np.power(n, 2) - (2 / n * np.sum(kernel_matrix, 1)) + np.diag(kernel_matrix)
-    #start[start < 1e-5] = 1e-5
-    #start = np.sqrt(start)
-    #start = start.astype(np.float128)
+    # start = np.sum(kernel_matrix).astype(complex) / np.power(n, 2) - (2 / n * np.sum(kernel_matrix, 1)) + np.diag(kernel_matrix)
+    # start[start < 1e-5] = 1e-5
+    start = np.sqrt(start)
 
     max_iter = 5
     iter = 0
@@ -82,5 +81,10 @@ def compute_weights(kernel_matrix, normalize=False):
         start = np.random.rand(n) + 1
         start = start.astype(complex)
         iter = iter + 1
+
+    # clean up weights: only real OR imaginary should be left, rest is rounding errors
+    tol=1e-10
+    weights_median_set.real[abs(weights_median_set.real) < tol] = 0.0
+    weights_median_set.imag[abs(weights_median_set.imag) < tol] = 0.0
 
     return weights_median_set, k_median_set, k_median_median#, iter2, max_iter2, first_complex

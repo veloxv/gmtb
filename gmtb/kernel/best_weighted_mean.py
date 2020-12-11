@@ -2,61 +2,59 @@ import numpy as np
 from gmtb.util import pdist
 
 
-def best_weighted_mean(oa, ob, alpha, object_set, kernel_matrix, kernel_func, dist_func, weighted_mean_func,complex):
+def best_weighted_mean(o_a, k_oa_set, k_oa_oa, o_b, k_ob_set, k_ob_ob,
+                       alpha, object_set, kernel_matrix, kernel_func,
+                       dist_func, weighted_mean_func):
 
     n = len(object_set)
 
     # compute weighted median
-    new_mean1 = weighted_mean_func(oa, ob, alpha)
-    new_mean2 = weighted_mean_func(ob, oa, 1-alpha)
+    new_mean_1 = weighted_mean_func(o_a, o_b, alpha)
+    new_mean_2 = weighted_mean_func(o_b, o_a, 1-alpha)
 
     # compute sets
-    k_mean_set1 = np.zeros(n)
-    k_mean_set2 = np.zeros(n)
+    k_mean_set_1 = np.zeros(n)
+    k_mean_set_2 = np.zeros(n)
 
     for i in range(n):
-        k_mean_set1[i] = kernel_func(object_set[i], new_mean1)
-        k_mean_set2[i] = kernel_func(object_set[i], new_mean2)
+        k_mean_set_1[i] = kernel_func(object_set[i], new_mean_1)
+        k_mean_set_2[i] = kernel_func(object_set[i], new_mean_2)
 
-    k_mean_mean1 = kernel_func(new_mean1, new_mean1)
-    k_mean_mean2 = kernel_func(new_mean2, new_mean2)
+    k_mean_mean_1 = kernel_func(new_mean_1, new_mean_1)
+    k_mean_mean_2 = kernel_func(new_mean_2, new_mean_2)
 
     # compute best value, ignore negative values
-    best_value1 = np.sum(np.sqrt(k_mean_mean1 - k_mean_set1 - np.conjugate(k_mean_set1) + np.diag(kernel_matrix)))
-    best_value2 = np.sum(np.sqrt(k_mean_mean2 - k_mean_set2 - np.conjugate(k_mean_set2) + np.diag(kernel_matrix)))
+    best_value_1 = np.sum(np.sqrt(k_mean_mean_1 - k_mean_set_1 - np.conjugate(k_mean_set_1) + np.diag(kernel_matrix)))
+    best_value_2 = np.sum(np.sqrt(k_mean_mean_2 - k_mean_set_2 - np.conjugate(k_mean_set_2) + np.diag(kernel_matrix)))
+    best_value_a = np.sum(np.sqrt(k_oa_oa - k_oa_set - np.conjugate(k_oa_set) + np.diag(kernel_matrix)))
+    best_value_b = np.sum(np.sqrt(k_ob_ob - k_ob_set - np.conjugate(k_ob_set) + np.diag(kernel_matrix)))
 
-    # compute best value using dist_func
-    #best_value1 = np.sum(pdist(set1=[new_mean1],set2=object_set,func=dist_func))
-    #best_value2 = np.sum(pdist(set1=[new_mean2],set2=object_set,func=dist_func))
+    arg_min = np.argmin(np.absolute([best_value_1, best_value_2, best_value_a, best_value_b]))
 
-    # return better result
-    if best_value1 < best_value2:
-        new_mean = new_mean1
-        k_mean_set = k_mean_set1
-        k_mean_mean = k_mean_mean1
-        best_value = best_value1
-    else:
-        new_mean = new_mean2
-        k_mean_set = k_mean_set2
-        k_mean_mean = k_mean_mean2
-        best_value = best_value2
+    new_mean = None
+    k_mean_set = None
+    k_mean_mean = None
+    best_value = None
 
-    # in case of complex alpha: test if oa was better. (the "sign" of alpha disappears)
-    if complex:
-        k_mean_set_oa = np.zeros(n)
-
-        for i in range(n):
-            k_mean_set_oa[i] = kernel_func(object_set[i], new_mean1)
-
-        k_mean_mean_oa = kernel_func(oa, oa)
-
-        # compute best value, ignore negative values
-        best_value_oa = np.sum(np.sqrt(k_mean_mean_oa - k_mean_set_oa - np.conjugate(k_mean_set_oa) + np.diag(kernel_matrix)))
-
-        if best_value_oa < best_value:
-            new_mean = oa
-            k_mean_set = k_mean_set_oa
-            k_mean_mean = k_mean_mean_oa
-            best_value = best_value_oa
+    if arg_min == 0:
+        new_mean = new_mean_1
+        k_mean_set = k_mean_set_1
+        k_mean_mean = k_mean_mean_1
+        best_value = best_value_1
+    elif arg_min == 1:
+        new_mean = new_mean_2
+        k_mean_set = k_mean_set_2
+        k_mean_mean = k_mean_mean_2
+        best_value = best_value_2
+    elif arg_min == 2:
+        new_mean = o_a
+        k_mean_set = k_oa_set
+        k_mean_mean = k_oa_oa
+        best_value = best_value_a
+    elif arg_min == 3:
+        new_mean = o_b
+        k_mean_set = k_ob_set
+        k_mean_mean = k_ob_ob
+        best_value = best_value_b
 
     return new_mean, k_mean_set, k_mean_mean, best_value

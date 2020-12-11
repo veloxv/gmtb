@@ -7,21 +7,22 @@ import networkx as nx
 
 def get_pairs(dist_mat):
     # cost matrix: negative distance and Diagonal is infinity
-    #cost_matrix = -dist_mat
-    #np.fill_diagonal(cost_matrix,np.inf)
-    #assignment = munkres(cost_matrix).nonzero()
+    # cost_matrix = -dist_mat
+    # np.fill_diagonal(cost_matrix,np.inf)
+    # assignment = munkres(cost_matrix).nonzero()
 
     g = nx.from_numpy_matrix(dist_mat)
     pairs = nx.max_weight_matching(g)
 
     return pairs
 
+
 # implementation of the linear recursive reconstruction method
 # returns:
 #   rec_obj - reconstructed object
 #   best_value - value of the reconstructed object (at the moment SOD)
-def linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix,verbose=False):
-
+def linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted_mean_func, kernel_matrix,
+                     verbose=False):
     # return if only one object
     if len(object_set) == 1:
         return object_set[0], 0
@@ -37,70 +38,57 @@ def linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted
     # first best value: set median
     ind = np.argsort(dist)
     rec_obj = object_set[ind[0]]
-    #best_value = np.sum(pdist(set1=orig_set,set2=[rec_obj],func=dist_func))
-    best_value = np.sum(np.sqrt(k_mean_mean[ind[0]] - 2 * k_mean_set[ind[0], :] + np.diag(kernel_matrix)))
-
+    # best_value = np.sum(pdist(set1=orig_set,set2=[rec_obj],func=dist_func))
+    best_value = np.sum(np.sqrt(k_mean_mean[ind[0]] - k_mean_set[ind[0], :]
+                                - np.conjugate(k_mean_set[ind[0], :]) + np.diag(kernel_matrix)))
 
     # precompute k_median
-    k_median_vec = np.sum(np.outer(weights,weights) * kernel_matrix) / np.sum(weights)**2
+    k_median_vec = np.sum(np.outer(weights, weights) * kernel_matrix) / np.sum(weights) ** 2
 
     while len(object_set) > 1:
 
         # sort by distance
         ind = np.argsort(dist)
-        pairs =[x for x in zip(*[iter(ind)]*2)]
+        pairs = [x for x in zip(*[iter(ind)] * 2)]
         leftover = []
 
         if len(ind) % 2 == 1:
             leftover = [ind[-1]]
 
         # sort by pairs (see ewm)
-        #dist_mat = pdist(object_set, dist_func)
+        # dist_mat = pdist(object_set, dist_func)
 
         # prevent no assignment for zero elements
-        #dist_mat = (dist_mat + 1) - np.eye(len(object_set))
-        #pairs = get_pairs(dist_mat)
-        #leftover = set(range(len(object_set))).difference([item for t in pairs for item in t])
+        # dist_mat = (dist_mat + 1) - np.eye(len(object_set))
+        # pairs = get_pairs(dist_mat)
+        # leftover = set(range(len(object_set))).difference([item for t in pairs for item in t])
 
         new_object_set = []
         new_k_mean_set = []
         new_k_mean_mean = []
         new_dist = []
 
-        for (x,y) in pairs:
+        for (x, y) in pairs:
 
             # compute new weighted mean
-            alpha,complex = compute_alpha(weights, k_mean_set[x], k_mean_mean[x], k_mean_set[y],
-                                  k_mean_mean[y],
-                                  kernel_func(object_set[x], object_set[y]))
+            alpha = compute_alpha(weights, k_mean_set[x], k_mean_mean[x], k_mean_set[y],
+                                  k_mean_mean[y], kernel_func(object_set[x], object_set[y]))
 
             nm, kms, kmm, bv = \
-                best_weighted_mean(object_set[x], object_set[y], alpha, orig_set, kernel_matrix,
+                best_weighted_mean(object_set[x], k_mean_set[x], k_mean_mean[x],
+                                   object_set[y], k_mean_set[y], k_mean_mean[y],
+                                   alpha, orig_set, kernel_matrix,
                                    kernel_func, dist_func,
-                                   weighted_mean_func, complex)
-
-            # old version: sort by distance
-            #for i in range(0,len(object_set)-1,2):
-
-            # compute new weighted mean
-            #alpha = compute_alpha(weights, k_mean_set[ind[i]], k_mean_mean[ind[i]], k_mean_set[ind[i+1]], k_mean_mean[ind[i+1]],
-            #                      kernel_func(object_set[ind[i]],object_set[ind[i+1]]))
-
-            #nm, kms, kmm, bv = \
-            #    best_weighted_mean(object_set[ind[i]], object_set[ind[i+1]], alpha, orig_set, kernel_matrix, kernel_func, dist_func,
-            #                       weighted_mean_func)
+                                   weighted_mean_func)
 
             new_object_set.append(nm)
             new_k_mean_set.append(kms)
             new_k_mean_mean.append(kmm)
-            tmp_dist = k_median_vec\
-                       - 2 * np.sum(weights * kms) / np.sum(weights)\
+            tmp_dist = k_median_vec \
+                       - np.sum(weights * kms) / np.sum(weights) \
+                       - np.conjugate(np.sum(weights * kms) / np.sum(weights)) \
                        + kmm
 
-            #if tmp_dist < 0:
-            #    tmp_dist = (dist[ind[i]] + dist[ind[i+1]])/2
-            #else:
-            #    tmp_dist = np.sqrt(tmp_dist)
             new_dist.append(tmp_dist)
 
             # save best
@@ -115,7 +103,7 @@ def linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted
             new_k_mean_set.append(k_mean_set[x])
             new_dist.append(dist[x])
 
-        #if np.remainder(len(object_set), 2) == 1:
+        # if np.remainder(len(object_set), 2) == 1:
         #    new_object_set.append(object_set[-1])
         #    new_k_mean_mean.append(k_mean_mean[-1])
         #    new_k_mean_set.append(k_mean_set[-1])
@@ -132,4 +120,3 @@ def linear_recursive(object_set, weights, dist, kernel_func, dist_func, weighted
 
     # end: return best result
     return rec_obj, best_value
-

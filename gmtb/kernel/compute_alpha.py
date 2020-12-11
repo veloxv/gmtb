@@ -10,7 +10,6 @@ import numpy as np
 # k_a_b = kernel between object a and b
 def compute_alpha(weights, k_a_set, k_a_a, k_b_set, k_b_b, k_a_b):
 
-    complex = False
     div = k_b_b - k_a_b - np.conjugate(k_a_b) + k_a_a
 
     # in case of negative values in sqrt, return 0.5 instead
@@ -20,6 +19,10 @@ def compute_alpha(weights, k_a_set, k_a_a, k_b_set, k_b_b, k_a_b):
     #else:
     #    alpha = 0.5
 
+    # in case div was zero (a and b are equal)
+    if (np.isnan(alpha)):
+        alpha = 0
+
     #TODO: how to convert to real alpha?
     if (np.iscomplex(alpha)):
         complex = True
@@ -27,4 +30,4 @@ def compute_alpha(weights, k_a_set, k_a_a, k_b_set, k_b_b, k_a_b):
 
     alpha = max(alpha, 0)
     alpha = min(alpha, 1)
-    return alpha, complex
+    return alpha
