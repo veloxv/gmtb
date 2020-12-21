@@ -1,3 +1,15 @@
+#ignore generated latex files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.spl
+*.snm
+*.toc
+*.vrb
+
 #ignore backup saves
 *~
 
