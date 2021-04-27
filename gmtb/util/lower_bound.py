@@ -11,7 +11,7 @@ from gmtb.kernel.kernel_functions import dist_sub_batch
 
 
 # linear programming based lower bound
-def lp_lower_bound(dist_mat):
+def lp_lower_bound(dist_mat, return_x = False):
     n = np.size(dist_mat,1)
 
     index = 0
@@ -42,7 +42,11 @@ def lp_lower_bound(dist_mat):
     # solve linprog. interior-point seems better in first tests
     result = linprog(c, a, b, options={'sparse': True})
 
-    return np.sum(result.x)
+    if (return_x):
+        return np.sum(result.x), result.x
+    else:
+        return np.sum(result.x)
+
 
 def graph_lower_bound(dist_mat):
     # cost matrix: negative distance and Diagonal is infinity
@@ -83,9 +87,9 @@ def kernel_lower_bound(dist_mat,kernel_mat):
     return np.sum(np.sqrt(tmp_bound))
 
 
-def lower_bound(dist_mat, method="lp", kernel_mat=None):
+def lower_bound(dist_mat, method="lp", kernel_mat=None, return_x=False):
     if method == "lp":
-        return lp_lower_bound(dist_mat)
+        return lp_lower_bound(dist_mat, return_x)
     elif method == "graph":
         return graph_lower_bound(dist_mat)
     elif method == "kernel":
