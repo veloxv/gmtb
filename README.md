@@ -18,7 +18,7 @@ https://www.uni-muenster.de/PRIA/en/forschung/dpe.html
 
 ## References
 
-`Nienkötter A, Jiang X. 2020. 'Kernel-based Generalized Median Computation for Consensus Learning.' (Submitted)`
+`Nienkötter A, Jiang X. 2022. 'Kernel-based Generalized Median Computation for Consensus Learning.' IEEE Transactions on Pattern Analysis and Machine Intelligence`
 
 `Nienkötter A, Jiang X. 2019. 'Distance-preserving vector space embedding for consensus learning.' IEEE Transactions on Systems, Man, and Cybernetics: Systems. `
 
